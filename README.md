@@ -68,7 +68,7 @@ Id like to give a shoutout to the following folks and projects for making AutoBo
 
 - The awesome developers of the security tools we've integrated into AutoBounty, like Subfinder, Amass, Sublist3r, Nikto, Nmap, Aquatone, Dirsearch, Nuclei, Paramspider, and Wafw00f. Your tools rock!
 
-- The fantastic open-source community for their invaluable feedback, bug reports, feature ideas, and overall support. You all help us make AutoBounty better with each update.
+- The fantastic open-source community for their invaluable feedback, bug reports, feature ideas, and overall support. You all help make AutoBounty better with each update.
 
 - The Python team for creating Python and the creators of libraries like concurrent.futures and argparse that make our lives easier.
 
