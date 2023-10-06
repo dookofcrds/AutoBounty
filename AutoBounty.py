@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Define the default target domain and output directory
 DEFAULT_TARGET_DOMAIN = "example.com"
-DEFAULT_OUTPUT_DIR = "/home/kali/your/directory/"
+DEFAULT_OUTPUT_DIR = "/home/kali/Desktop/example"
 
 # Function to run commands using subprocess
 def execute_command(command, output_file=None):
@@ -120,13 +120,14 @@ def run_dirsearch(subdomain, output_dir):
 
     print(f"Dirsearch execution for {subdomain} completed.\n")
 
+
 # Modify the run_security_scan function to pass the list of live subdomains as follows:
 # Run Dirsearch for directory and file discovery
-with open(live_subdomains_file, "r") as live_subdomains:
-    with ThreadPoolExecutor() as executor:
-        for live_subdomain in live_subdomains:
-            executor.submit(run_dirsearch, live_subdomain.strip(), output_dir)
-
+def run_dirsearch_for_live_subdomains(live_subdomains_file, output_dir):
+    with open(live_subdomains_file, "r") as live_subdomains:
+        with ThreadPoolExecutor() as executor:
+            for live_subdomain in live_subdomains:
+                executor.submit(run_dirsearch, live_subdomain.strip(), output_dir)
 
 
 # Function to run Nuclei
@@ -148,12 +149,15 @@ def run_nuclei(subdomains, output_dir):
 
     print(f"Nuclei execution completed.\n")
 
+
 # Modify the run_security_scan function to pass the list of live subdomains as follows:
 # Run Nuclei for web vulnerability scanning
-with open(live_subdomains_file, "r") as live_subdomains:
-    live_subdomain_list = [line.strip() for line in live_subdomains]
-    with ThreadPoolExecutor() as executor:
-        executor.submit(run_nuclei, live_subdomain_list, output_dir)
+def run_nuclei_for_live_subdomains(live_subdomains_file, output_dir):
+    with open(live_subdomains_file, "r") as live_subdomains:
+        live_subdomain_list = [line.strip() for line in live_subdomains]
+        with ThreadPoolExecutor() as executor:
+            executor.submit(run_nuclei, live_subdomain_list, output_dir)
+
 
 # Function to run Paramspider with sudo
 def run_paramspider(subdomain, output_dir):
@@ -170,13 +174,14 @@ def run_paramspider(subdomain, output_dir):
 
     print(f"Paramspider execution for {subdomain} completed.\n")
 
+
 # Modify the run_security_scan function to pass the list of live subdomains as follows:
 # Run Paramspider for parameter discovery
-with open(live_subdomains_file, "r") as live_subdomains:
-    with ThreadPoolExecutor() as executor:
-        for live_subdomain in live_subdomains:
-            executor.submit(run_paramspider, live_subdomain.strip(), output_dir)
-
+def run_paramspider_for_live_subdomains(live_subdomains_file, output_dir):
+    with open(live_subdomains_file, "r") as live_subdomains:
+        with ThreadPoolExecutor() as executor:
+            for live_subdomain in live_subdomains:
+                executor.submit(run_paramspider, live_subdomain.strip(), output_dir)
 
 
 # Function to run wafw00f against a list of subdomains
@@ -186,7 +191,7 @@ def run_wafw00f(live_subdomains, output_dir):
     wafw00f_output_file = os.path.join(wafw00f_output_dir, "wafw00f_output.txt")
 
     print("Running WAF detection using wafw00f...")
-    
+
     # Create a comma-separated string of live subdomains
     live_subdomains_str = ",".join(live_subdomains)
 
@@ -194,14 +199,14 @@ def run_wafw00f(live_subdomains, output_dir):
     execute_command(wafw00f_cmd)
     print("WAF detection using wafw00f completed.\n")
 
+
 # Modify the run_security_scan function to pass the list of live subdomains as follows:
 # Detect WAFs
-with open(live_subdomains_file, "r") as live_subdomains:
-    live_subdomain_list = [line.strip() for line in live_subdomains]
-    with ThreadPoolExecutor() as executor:
-        executor.submit(run_wafw00f, live_subdomain_list, output_dir)
-
-
+def detect_wafs_for_live_subdomains(live_subdomains_file, output_dir):
+    with open(live_subdomains_file, "r") as live_subdomains:
+        live_subdomain_list = [line.strip() for line in live_subdomains]
+        with ThreadPoolExecutor() as executor:
+            executor.submit(run_wafw00f, live_subdomain_list, output_dir)
 
 
 # Function to generate the HTML report
@@ -257,16 +262,17 @@ def generate_html_report(output_dir):
                 html_report += nmap_output.read()
                 html_report += "</pre>"
 
-    # Include Aquatone results
+    # Include Aquatone results as links to screenshots
     html_report += "<h2>Aquatone Results</h2>"
     aquatone_results_dir = os.path.join(output_dir, "aquatone_output")
     for root, _, files in os.walk(aquatone_results_dir):
         for file in files:
-            with open(os.path.join(root, file), "r") as aquatone_output:
-                html_report += f"<h3>{file}</h3>"
-                html_report += "<pre>"
-                html_report += aquatone_output.read()
-                html_report += "</pre>"
+            if file.endswith((".png", ".jpg", ".jpeg", ".gif")):
+                screenshot_path = os.path.join(root, file)
+                screenshot_filename = os.path.basename(screenshot_path)
+                # Add a link to the screenshot
+                html_report += f"<h3>{screenshot_filename}</h3>"
+                html_report += f'<img src="{screenshot_path}" alt="{screenshot_filename}" width="800"><br><br>'
 
     # Include Dirsearch results
     html_report += "<h2>Dirsearch Results</h2>"
@@ -303,16 +309,14 @@ def generate_html_report(output_dir):
 
     # Include WAF detection results
     html_report += "<h2>WAF Detection Results</h2>"
-    wafw00f_results_dir = os.path.join(output_dir, "wafw00f_results")
-    for root, _, files in os.walk(wafw00f_results_dir):
-        for file in files:
-            with open(os.path.join(root, file), "r") as wafw00f_output:
-                html_report += f"<h3>{file}</h3>"
-                html_report += "<pre>"
-                html_report += wafw00f_output.read()
-                html_report += "</pre>"
+    wafw00f_output_dir = os.path.join(output_dir, "wafw00f_results")
+    wafw00f_output_file = os.path.join(wafw00f_output_dir, "wafw00f_output.txt")
+    with open(wafw00f_output_file, "r") as wafw00f_output:
+        html_report += "<pre>"
+        html_report += wafw00f_output.read()
+        html_report += "</pre>"
 
-    # HTML report footer
+    # Close the HTML report
     html_report += """
     </body>
     </html>
@@ -323,23 +327,26 @@ def generate_html_report(output_dir):
     with open(report_file, "w") as report:
         report.write(html_report)
 
-    print(f"HTML report generated: {report_file}\n")
+    print("HTML report generated successfully.\n")
 
 
-# Function to execute all scan steps
+# Function to run the entire security scan process
 def run_security_scan(target_domain, output_dir):
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+
     # Run subdomain enumeration
     run_subdomain_enumeration(target_domain, output_dir)
 
     # Run live subdomain discovery
     run_live_subdomain_discovery(output_dir)
 
-    # Run Nikto on live subdomains
-    live_subdomains_file = os.path.join(output_dir, "live_subdomains.txt")
-    with open(live_subdomains_file, "r") as live_subdomains:
-        with ThreadPoolExecutor() as executor:
-            for live_subdomain in live_subdomains:
-                executor.submit(run_nikto, live_subdomain.strip(), output_dir)
+    # Run Nikto for each live subdomain
+    nikto_output_dir = os.path.join(output_dir, "nikto_results")
+    os.makedirs(nikto_output_dir, exist_ok=True)
+    run_dirsearch_for_live_subdomains(
+        os.path.join(output_dir, "live_subdomains.txt"), output_dir
+    )
 
     # Run Nmap for network enumeration and web vulnerability scanning
     run_nmap(target_domain, output_dir)
@@ -347,49 +354,54 @@ def run_security_scan(target_domain, output_dir):
     # Run Aquatone for subdomain screenshots
     run_aquatone(output_dir)
 
-    # Run Dirsearch for directory and file discovery
-    with open(live_subdomains_file, "r") as live_subdomains:
-        with ThreadPoolExecutor() as executor:
-            for live_subdomain in live_subdomains:
-                executor.submit(run_dirsearch, live_subdomain.strip(), output_dir)
-
     # Run Nuclei for web vulnerability scanning
-    with open(live_subdomains_file, "r") as live_subdomains:
-        with ThreadPoolExecutor() as executor:
-            for live_subdomain in live_subdomains:
-                executor.submit(run_nuclei, live_subdomain.strip(), output_dir)
+    run_nuclei_for_live_subdomains(
+        os.path.join(output_dir, "live_subdomains.txt"), output_dir
+    )
 
     # Run Paramspider for parameter discovery
-    with open(live_subdomains_file, "r") as live_subdomains:
-        with ThreadPoolExecutor() as executor:
-            for live_subdomain in live_subdomains:
-                executor.submit(run_paramspider, live_subdomain.strip(), output_dir)
+    run_paramspider_for_live_subdomains(
+        os.path.join(output_dir, "live_subdomains.txt"), output_dir
+    )
 
     # Detect WAFs
-    with open(live_subdomains_file, "r") as live_subdomains:
-        with ThreadPoolExecutor() as executor:
-            for live_subdomain in live_subdomains:
-                executor.submit(run_waf_detection, live_subdomain.strip(), output_dir)
+    detect_wafs_for_live_subdomains(
+        os.path.join(output_dir, "live_subdomains.txt"), output_dir
+    )
 
     # Generate the HTML report
     generate_html_report(output_dir)
 
 
 if __name__ == "__main__":
+    # Define CLI arguments and descriptions
     parser = argparse.ArgumentParser(description="Security Scanning Script")
+
     parser.add_argument(
-        "target_domain", type=str, help="The target domain to scan (e.g., example.com)"
+        "target_domain",
+        type=str,
+        help="The target domain to scan (e.g., example.com)",
+        default=DEFAULT_TARGET_DOMAIN,
     )
+
     parser.add_argument(
         "--output_dir",
         type=str,
-        default=DEFAULT_OUTPUT_DIR,
         help="The directory to store scan results",
+        default=DEFAULT_OUTPUT_DIR,
+    )
+
+    parser.add_argument(
+        "--wordlist",
+        type=str,
+        help="Path to the wordlist file for directory and file discovery",
+        default="/path/to/your/wordlist.txt",  # Replace with your default wordlist path
     )
 
     args = parser.parse_args()
     target_domain = args.target_domain
     output_dir = args.output_dir
+    wordlist_path = args.wordlist
 
     # Create the output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
