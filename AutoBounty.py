@@ -5,8 +5,8 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 # Define the default target domain and output directory
-DEFAULT_TARGET_DOMAIN = "magicjackpot.ro"
-DEFAULT_OUTPUT_DIR = "/home/kali/Desktop/magicjackpot/"
+DEFAULT_TARGET_DOMAIN = "example.com"
+DEFAULT_OUTPUT_DIR = "/home/kali/your/directory/"
 
 # Function to run commands using subprocess
 def execute_command(command, output_file=None):
